@@ -1,8 +1,6 @@
 package uk.deathtrap.plugins.deathtrap;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -10,6 +8,8 @@ import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerEditBookEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
+
+import java.lang.reflect.Array;
 
 public final class MyPLayerListener implements Listener {
     public MyPLayerListener(DeathTrap plugin) {
@@ -32,14 +32,25 @@ public final class MyPLayerListener implements Listener {
 
         }
     }
+
     @EventHandler
     public void goToBed(PlayerBedEnterEvent event) {
+        Player player = event.getPlayer();
         int numberOfPlayers = Bukkit.getOnlinePlayers().size();
         String name = event.getPlayer().getDisplayName();
+        long time = player.getLocation().getWorld().getTime();
+        Boolean nighttime;
+        if ((time < 12300) || (time > 23850)){
+            nighttime = true;
+        }else{
+            nighttime = false;
+        }
         if (numberOfPlayers > 0) {
-            Bukkit.getConsoleSender().sendMessage(name + " is trying to sleep");
-            Bukkit.broadcastMessage(name + " is trying to sleep, consider sleeping or disconnecting");
+            if (nighttime) {
 
+                Bukkit.getConsoleSender().sendMessage(name + " is trying to sleep");
+                Bukkit.broadcastMessage("People trying to sleep");
+            }
         }
     }
 
