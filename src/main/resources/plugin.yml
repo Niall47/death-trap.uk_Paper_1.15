@@ -1,0 +1,18 @@
+name: DeathTrap
+version: ${project.version}
+main: uk.deathtrap.plugins.deathtrap.DeathTrap
+api-version: 1.14
+authors: [Niall47]
+description: Custom plugin for Anarchy Survival
+website: death-trap.uk
+commands:
+  Starving:
+    description: Whine to admin that theres no food
+    usage: /<command>
+  Lost:
+    description: Whine to admin that theres you cant navigate
+    usage: /<command>
+  Test:
+    description: Just a test
+    usage: /<command>
+
