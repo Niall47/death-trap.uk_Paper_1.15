@@ -51,11 +51,6 @@ public final class DeathTrap extends JavaPlugin implements Listener {
 //            player.teleport(new Location( Bukkit.getWorld(DeathTrap.SworldName), X1, Y1, Z1));
         }
 
-        if((cmd).getName().equalsIgnoreCase("test"))
-        {
-            player.sendMessage(ChatColor.GOLD + "You have run the test command");
-            return true;
-        }
         return false;
 
     }
