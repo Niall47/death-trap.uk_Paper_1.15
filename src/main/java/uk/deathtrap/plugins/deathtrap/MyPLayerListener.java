@@ -4,12 +4,11 @@ import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerBedEnterEvent;
-import org.bukkit.event.player.PlayerEditBookEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Vector;
 
-import java.lang.reflect.Array;
+import java.text.DecimalFormat;
 
 public final class MyPLayerListener implements Listener {
     public MyPLayerListener(DeathTrap plugin) {
@@ -25,11 +24,9 @@ public final class MyPLayerListener implements Listener {
             int slot = event.getSlot();
             ItemStack book = player.getInventory().getItem(slot);
             book.setAmount(0);
-
-            player.sendMessage(ChatColor.GOLD + "Nobody wants to read your " + pages + " page novel dude");
+            player.sendMessage(ChatColor.GOLD + "Nobody wants to read your " + pages + " page novel " + player.getName());
             ItemStack item = new ItemStack(Material.WRITABLE_BOOK, 1);
             player.getInventory().setItem(slot, item);
-
         }
     }
 
@@ -39,19 +36,30 @@ public final class MyPLayerListener implements Listener {
         int numberOfPlayers = Bukkit.getOnlinePlayers().size();
         String name = event.getPlayer().getDisplayName();
         long time = player.getLocation().getWorld().getTime();
-        Boolean nighttime;
-        if ((time < 12300) || (time > 23850)){
-            nighttime = true;
-        }else{
-            nighttime = false;
-        }
-        if (numberOfPlayers > 0) {
-            if (nighttime) {
 
-                Bukkit.getConsoleSender().sendMessage(name + " is trying to sleep");
-                Bukkit.broadcastMessage("People trying to sleep");
-            }
+        if (numberOfPlayers > 1 && ((time < 12300) || (time > 23850))) {
+            Bukkit.getConsoleSender().sendMessage(name + " is trying to sleep");
+            Bukkit.broadcastMessage("Other players are trying to sleep, be polite and sleep or disconnect");
         }
+    }
+
+    @EventHandler
+    public void getLastCoords(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        String name = player.getDisplayName();
+        Location location = player.getLocation();
+        DecimalFormat df = new DecimalFormat("#.##");
+        Bukkit.getConsoleSender().sendMessage(name + " is leaving");
+        String lastLog = df.format(location.getX()) + " " + df.format(location.getY()) + " " + df.format(location.getZ());
+        Bukkit.getConsoleSender().sendMessage(lastLog);
+    }
+
+    @EventHandler
+    public void noFly(PlayerVelocityEvent event){
+        Vector vector = event.getVelocity();
+        System.out.println(vector);
+        Player player = event.getPlayer();
+        Bukkit.broadcastMessage("flying" + player.getFlySpeed());
     }
 
     @EventHandler
