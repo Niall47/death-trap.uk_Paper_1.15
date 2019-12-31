@@ -10,19 +10,40 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.world.ChunkPopulateEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.Vector;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 
 public final class MyPlayerListener implements Listener {
     public MyPlayerListener(DeathTrap plugin) {
         Bukkit.getServer().getConsoleSender().sendRawMessage("Death-Trap.uk starting up");
+    }
+
+    @EventHandler
+    public void newChunks(ChunkPopulateEvent event) {
+        HandlerList handler = event.getHandlers();
+        int X = event.getChunk().getX();
+        int Y = event.getChunk().getZ();
+        Bukkit.getServer().getConsoleSender().sendRawMessage("Creating new chunk @ " + X + " " + Y);
+    }
+
+    @EventHandler
+    public void onLogin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        Bukkit.getServer().getConsoleSender().sendRawMessage(player.getDisplayName() + " has joined the server!");
+        if (!player.hasPlayedBefore()) {
+            player.sendMessage(ChatColor.GOLD + "Welcome to Death-Trap.uk");
+            player.sendMessage(ChatColor.GOLD + "Visit Death-Trap.uk for voting rewards and updates");
+        }
     }
 
     @EventHandler
@@ -62,10 +83,11 @@ public final class MyPlayerListener implements Listener {
         DecimalFormat df = new DecimalFormat("#.##");
         String lastLog = df.format(location.getX()) + " " + df.format(location.getY()) + " " + df.format(location.getZ());
         Date today = new Date();
+        JSONObject playerEntry = new JSONObject();
         JSONObject entry = new JSONObject();
-        entry.put(name, uuid);
+        playerEntry.put(uuid.toString(), name);
         entry.put(lastLog,today.toString());
-        saveToJson("lastLog.json", entry);
+        saveToJson("lastLog.json", playerEntry, entry);
     }
 
     @EventHandler
@@ -78,61 +100,55 @@ public final class MyPlayerListener implements Listener {
         switch (material) {
             case BEDROCK:
             case END_PORTAL_FRAME:
-            case END_GATEWAY:
-            case END_PORTAL:
+                JSONObject playerEntry = new JSONObject();
                 JSONObject entry = new JSONObject();
                 String player = event.getPlayer().getPlayerListName();
                 UUID uuid = event.getPlayer().getUniqueId();
                 Date today = new Date();
-                entry.put(player, uuid);
+                playerEntry.put(uuid.toString(), player);
                 entry.put(material.toString() + " @ " + location.toString(),today.toString());
 
-                saveToJson("illegalItems.json", entry);
+                saveToJson("illegalItems.json", playerEntry, entry);
                 break;
         }
     }
 
-    private void saveToJson (String filename, JSONObject entry) {
+    private void saveToJson (String filename, JSONObject playerEntry, JSONObject entry) {
+
+        //Create file if it doesn't exist
         try {
             if(!Files.exists(Paths.get(filename))){
                 String data = "{}";
                 Files.write(Paths.get(filename), data.getBytes());
             }
-            System.out.println("Logging to Json");
-            System.out.println(entry.toJSONString());
-            Files.write(Paths.get(filename), entry.toString().getBytes());
         } catch(IOException e) {
-            System.out.println("Failed to save logout details to " + filename);
-            System.out.println(entry);
+            System.out.println("Failed to access or create " + filename);
+        }
+
+        //Check for our player in existing data
+        try {
+            JSONParser jsonParser = new JSONParser();
+            FileReader reader = new FileReader(filename);
+            JSONArray array = new JSONArray();
+            ArrayList<JSONObject> users = new ArrayList<>();
+            JSONObject keys = (JSONObject) jsonParser.parse(reader);
+            users.add(keys);
+            for (JSONObject user : users) {
+                if (user.equals(playerEntry)) {
+                    System.out.println("Matched a player");
+                }
+            }
+
+        } catch(Exception e){
+            System.out.println("Error locating user in " + filename);
+            System.out.println(e);
+        }
+
+        try {
+            Files.write(Paths.get(filename), playerEntry.toString().getBytes());
+        } catch (Exception e) {
+            System.out.println("Crashed trying to write to " + filename);
         }
     }
-
-    @EventHandler
-    public void newChunks(ChunkPopulateEvent event) {
-        HandlerList handler = event.getHandlers();
-        int X = event.getChunk().getX();
-        int Y = event.getChunk().getZ();
-        Bukkit.getServer().getConsoleSender().sendRawMessage("NEW CHUNK @ " + X + " " + Y);
-    }
-
-    @EventHandler
-    public void noFly(PlayerVelocityEvent event){
-        Vector vector = event.getVelocity();
-        System.out.println(vector);
-        Player player = event.getPlayer();
-        Bukkit.broadcastMessage("flying" + player.getFlySpeed());
-    }
-
-
-    @EventHandler
-    public void onLogin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        Bukkit.getServer().getConsoleSender().sendRawMessage(player.getDisplayName() + " has joined the server!");
-        if (!player.hasPlayedBefore()) {
-            player.sendMessage(ChatColor.GOLD + "Welcome to Death-Trap.uk");
-            player.sendMessage(ChatColor.GOLD + "Visit Death-Trap.uk for voting rewards and updates");
-        }
-    }
-
     }
 
