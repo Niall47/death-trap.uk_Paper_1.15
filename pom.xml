@@ -79,5 +79,10 @@
             <version>1.18.10</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+            <version>LATEST</version>
+        </dependency>
     </dependencies>
 </project>

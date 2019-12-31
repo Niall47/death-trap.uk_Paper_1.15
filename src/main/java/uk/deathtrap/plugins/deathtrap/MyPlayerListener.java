@@ -1,17 +1,26 @@
 package uk.deathtrap.plugins.deathtrap;
 
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.event.world.ChunkPopulateEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
+import org.json.simple.JSONObject;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
+import java.util.UUID;
 
-public final class MyPLayerListener implements Listener {
-    public MyPLayerListener(DeathTrap plugin) {
+public final class MyPlayerListener implements Listener {
+    public MyPlayerListener(DeathTrap plugin) {
         Bukkit.getServer().getConsoleSender().sendRawMessage("Death-Trap.uk starting up");
     }
 
@@ -47,11 +56,61 @@ public final class MyPLayerListener implements Listener {
     public void getLastCoords(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         String name = player.getDisplayName();
+        UUID uuid = player.getUniqueId();
         Location location = player.getLocation();
         DecimalFormat df = new DecimalFormat("#.##");
-        Bukkit.getConsoleSender().sendMessage(name + " is leaving");
         String lastLog = df.format(location.getX()) + " " + df.format(location.getY()) + " " + df.format(location.getZ());
-        Bukkit.getConsoleSender().sendMessage(lastLog);
+        recordLastCoords(lastLog, uuid, name);
+    }
+
+    private void recordLastCoords(String lastLog, UUID uuid, String name) {
+        JSONObject entry = new JSONObject();
+        entry.put("uuid", uuid);
+        entry.put("name", name);
+        entry.put("lastLog", lastLog);
+        saveToJson("lastLog.json", entry);
+    }
+
+    @EventHandler
+    public void bedrockSnitch(BlockPlaceEvent event) {
+
+        JSONObject entry = new JSONObject();
+        String player = event.getPlayer().getPlayerListName();
+        Block block = event.getBlockPlaced();
+        Location location = block.getLocation();
+        Material material = block.getType();
+
+        saveToJson("illegalItems.json", entry);
+
+        switch (material) {
+            case BEDROCK:
+            case END_PORTAL_FRAME:
+            case END_GATEWAY:
+            case END_PORTAL:
+                System.out.println(player + " just placed an illegal " + material.toString() + " at " + location.toString());
+                break;
+        }
+    }
+
+    private void saveToJson (String filename, JSONObject entry) {
+        try {
+            if(!Files.exists(Paths.get(filename))){
+                String data = "{}";
+                Files.write(Paths.get(filename), data.getBytes());
+            }
+            Files.write(Paths.get("filename"), entry.toJSONString().getBytes());
+        } catch(IOException e) {
+            System.out.println("Failed to save logout details to " + filename);
+            System.out.println(entry);
+        }
+    }
+
+    @EventHandler
+    public void newChunks(ChunkPopulateEvent event) {
+        HandlerList handler = event.getHandlers();
+        int X = event.getChunk().getX();
+        int Y = event.getChunk().getZ();
+        Bukkit.getServer().getConsoleSender().sendRawMessage("NEW CHUNK @ " + X + " " + Y);
     }
 
     @EventHandler
@@ -62,6 +121,7 @@ public final class MyPLayerListener implements Listener {
         Bukkit.broadcastMessage("flying" + player.getFlySpeed());
     }
 
+
     @EventHandler
     public void onLogin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
@@ -71,5 +131,6 @@ public final class MyPLayerListener implements Listener {
             player.sendMessage(ChatColor.GOLD + "Visit Death-Trap.uk for voting rewards and updates");
         }
     }
+
     }
 
