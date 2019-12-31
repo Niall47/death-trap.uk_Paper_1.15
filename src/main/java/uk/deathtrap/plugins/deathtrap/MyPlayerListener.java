@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
+import java.util.Date;
 import java.util.UUID;
 
 public final class MyPlayerListener implements Listener {
@@ -60,34 +61,33 @@ public final class MyPlayerListener implements Listener {
         Location location = player.getLocation();
         DecimalFormat df = new DecimalFormat("#.##");
         String lastLog = df.format(location.getX()) + " " + df.format(location.getY()) + " " + df.format(location.getZ());
-        recordLastCoords(lastLog, uuid, name);
-    }
-
-    private void recordLastCoords(String lastLog, UUID uuid, String name) {
+        Date today = new Date();
         JSONObject entry = new JSONObject();
-        entry.put("uuid", uuid);
-        entry.put("name", name);
-        entry.put("lastLog", lastLog);
+        entry.put(name, uuid);
+        entry.put(lastLog,today.toString());
         saveToJson("lastLog.json", entry);
     }
 
     @EventHandler
     public void bedrockSnitch(BlockPlaceEvent event) {
 
-        JSONObject entry = new JSONObject();
-        String player = event.getPlayer().getPlayerListName();
         Block block = event.getBlockPlaced();
         Location location = block.getLocation();
         Material material = block.getType();
-
-        saveToJson("illegalItems.json", entry);
 
         switch (material) {
             case BEDROCK:
             case END_PORTAL_FRAME:
             case END_GATEWAY:
             case END_PORTAL:
-                System.out.println(player + " just placed an illegal " + material.toString() + " at " + location.toString());
+                JSONObject entry = new JSONObject();
+                String player = event.getPlayer().getPlayerListName();
+                UUID uuid = event.getPlayer().getUniqueId();
+                Date today = new Date();
+                entry.put(player, uuid);
+                entry.put(material.toString() + " @ " + location.toString(),today.toString());
+
+                saveToJson("illegalItems.json", entry);
                 break;
         }
     }
@@ -98,7 +98,9 @@ public final class MyPlayerListener implements Listener {
                 String data = "{}";
                 Files.write(Paths.get(filename), data.getBytes());
             }
-            Files.write(Paths.get("filename"), entry.toJSONString().getBytes());
+            System.out.println("Logging to Json");
+            System.out.println(entry.toJSONString());
+            Files.write(Paths.get(filename), entry.toString().getBytes());
         } catch(IOException e) {
             System.out.println("Failed to save logout details to " + filename);
             System.out.println(entry);
