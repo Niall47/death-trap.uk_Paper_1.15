@@ -1,5 +1,7 @@
 package uk.deathtrap.plugins.deathtrap;
 
+import com.google.gson.JsonArray;
+import com.google.gson.annotations.JsonAdapter;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -13,15 +15,14 @@ import org.bukkit.inventory.ItemStack;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
 
 public final class MyPlayerListener implements Listener {
     public MyPlayerListener(DeathTrap plugin) {
@@ -85,37 +86,34 @@ public final class MyPlayerListener implements Listener {
         Date today = new Date();
         JSONObject playerEntry = new JSONObject();
         JSONObject entry = new JSONObject();
-        playerEntry.put(uuid.toString(), name);
         entry.put(lastLog,today.toString());
-        saveToJson("lastLog.json", playerEntry, entry);
+        //saveToJson("lastLog.json", uuid, entry);
     }
 
     @EventHandler
     public void bedrockSnitch(BlockPlaceEvent event) {
 
         Block block = event.getBlockPlaced();
-        Location location = block.getLocation();
         Material material = block.getType();
 
         switch (material) {
             case BEDROCK:
             case END_PORTAL_FRAME:
+                Location location = block.getLocation();
                 JSONObject playerEntry = new JSONObject();
                 JSONObject entry = new JSONObject();
                 String player = event.getPlayer().getPlayerListName();
                 UUID uuid = event.getPlayer().getUniqueId();
                 Date today = new Date();
-                playerEntry.put(uuid.toString(), player);
                 entry.put(material.toString() + " @ " + location.toString(),today.toString());
 
-                saveToJson("illegalItems.json", playerEntry, entry);
+                saveToJson("illegalItems.json", uuid, entry);
                 break;
         }
     }
 
-    private void saveToJson (String filename, JSONObject playerEntry, JSONObject entry) {
+    private void saveToJson (String filename, UUID uuid, JSONObject entry) {
 
-        //Create file if it doesn't exist
         try {
             if(!Files.exists(Paths.get(filename))){
                 String data = "{}";
@@ -125,27 +123,31 @@ public final class MyPlayerListener implements Listener {
             System.out.println("Failed to access or create " + filename);
         }
 
-        //Check for our player in existing data
+        JSONObject keys = new JSONObject();
         try {
             JSONParser jsonParser = new JSONParser();
             FileReader reader = new FileReader(filename);
-            JSONArray array = new JSONArray();
-            ArrayList<JSONObject> users = new ArrayList<>();
-            JSONObject keys = (JSONObject) jsonParser.parse(reader);
-            users.add(keys);
-            for (JSONObject user : users) {
-                if (user.equals(playerEntry)) {
-                    System.out.println("Matched a player");
-                }
+            keys = (JSONObject) jsonParser.parse(reader);
+        } catch (IOException | ParseException e) {
+            System.out.println("Failed to read " + filename.toString());
+        }
+
+        try {
+            if(keys.containsKey(uuid.toString())){
+                JSONArray previous = (JSONArray) keys.get(uuid.toString());
+                previous.add(entry);
+                keys.put(uuid.toString(), previous);
+
+            } else {
+                keys.put(uuid.toString(), entry);
             }
 
         } catch(Exception e){
             System.out.println("Error locating user in " + filename);
-            System.out.println(e);
         }
 
         try {
-            Files.write(Paths.get(filename), playerEntry.toString().getBytes());
+            Files.write(Paths.get(filename), keys.toString().getBytes());
         } catch (Exception e) {
             System.out.println("Crashed trying to write to " + filename);
         }
