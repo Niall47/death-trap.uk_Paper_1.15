@@ -1,7 +1,5 @@
 package uk.deathtrap.plugins.deathtrap;
 
-import com.google.gson.JsonArray;
-import com.google.gson.annotations.JsonAdapter;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -87,7 +85,7 @@ public final class MyPlayerListener implements Listener {
         JSONObject playerEntry = new JSONObject();
         JSONObject entry = new JSONObject();
         entry.put(lastLog,today.toString());
-        //saveToJson("lastLog.json", uuid, entry);
+        saveToJson("lastLog.json", uuid, entry);
     }
 
     @EventHandler
@@ -105,7 +103,8 @@ public final class MyPlayerListener implements Listener {
                 String player = event.getPlayer().getPlayerListName();
                 UUID uuid = event.getPlayer().getUniqueId();
                 Date today = new Date();
-                entry.put(material.toString() + " @ " + location.toString(),today.toString());
+                String locationString = location.getWorld().toString() + " " + location.getX() + " " + location.getY() + " " + location.getZ();
+                entry.put(material.toString() + " @ " + locationString,today.toString());
 
                 saveToJson("illegalItems.json", uuid, entry);
                 break;
@@ -123,23 +122,26 @@ public final class MyPlayerListener implements Listener {
             System.out.println("Failed to access or create " + filename);
         }
 
-        JSONObject keys = new JSONObject();
+        JSONObject jsonFile = new JSONObject();
+
         try {
             JSONParser jsonParser = new JSONParser();
             FileReader reader = new FileReader(filename);
-            keys = (JSONObject) jsonParser.parse(reader);
+            jsonFile = (JSONObject) jsonParser.parse(reader);
         } catch (IOException | ParseException e) {
             System.out.println("Failed to read " + filename.toString());
         }
 
         try {
-            if(keys.containsKey(uuid.toString())){
-                JSONArray previous = (JSONArray) keys.get(uuid.toString());
-                previous.add(entry);
-                keys.put(uuid.toString(), previous);
+            if(jsonFile.containsKey(uuid.toString())){
+                JSONArray userHistory = (JSONArray) jsonFile.get(uuid.toString());
+                userHistory.add(entry);
+                jsonFile.put(uuid.toString(), userHistory);
 
             } else {
-                keys.put(uuid.toString(), entry);
+                JSONArray userHistory = new JSONArray();
+                userHistory.add(entry);
+                jsonFile.put(uuid.toString(), userHistory);
             }
 
         } catch(Exception e){
@@ -147,7 +149,7 @@ public final class MyPlayerListener implements Listener {
         }
 
         try {
-            Files.write(Paths.get(filename), keys.toString().getBytes());
+            Files.write(Paths.get(filename), jsonFile.toString().getBytes());
         } catch (Exception e) {
             System.out.println("Crashed trying to write to " + filename);
         }
