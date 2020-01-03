@@ -2,6 +2,8 @@ package uk.deathtrap.plugins.deathtrap;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.entity.EnderDragon;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
@@ -14,6 +16,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.spigotmc.event.player.PlayerSpawnLocationEvent;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -23,8 +26,19 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 public final class MyPlayerListener implements Listener {
+
     public MyPlayerListener(DeathTrap plugin) {
         Bukkit.getServer().getConsoleSender().sendRawMessage("Death-Trap.uk starting up");
+    }
+
+    @EventHandler
+    public void onLogin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        Bukkit.getServer().getConsoleSender().sendRawMessage(player.getDisplayName() + " has joined the server!");
+        if (!player.hasPlayedBefore()) {
+            player.sendMessage(ChatColor.GOLD + "Welcome to Death-Trap.uk");
+            player.sendMessage(ChatColor.GOLD + "Visit Death-Trap.uk for voting rewards and updates");
+        }
     }
 
     @EventHandler
@@ -36,13 +50,28 @@ public final class MyPlayerListener implements Listener {
     }
 
     @EventHandler
-    public void onLogin(PlayerJoinEvent event) {
+    public void newPlayer(PlayerSpawnLocationEvent event){
+        //this needs a (if player has played before check
         Player player = event.getPlayer();
-        Bukkit.getServer().getConsoleSender().sendRawMessage(player.getDisplayName() + " has joined the server!");
-        if (!player.hasPlayedBefore()) {
-            player.sendMessage(ChatColor.GOLD + "Welcome to Death-Trap.uk");
-            player.sendMessage(ChatColor.GOLD + "Visit Death-Trap.uk for voting rewards and updates");
-        }
+        Location location = event.getSpawnLocation();
+        event.setSpawnLocation(location);
+        dragonFight(player, location);
+    }
+
+    private static void dragonFight(Player player, Location location) {
+        System.out.println(player.getName() + " is facing the dragon");
+        World world = player.getWorld();
+        EntityType entity = null;
+        Location dragonSpawn = new Location(world, location.getX() - 55, location.getY(), location.getZ());
+        EnderDragon welcomeDragon = (EnderDragon) world.spawnEntity(dragonSpawn, entity.ENDER_DRAGON);
+        world.strikeLightningEffect(location);
+        welcomeDragon.setGlowing(true);
+        System.out.println("Ender dragon spawned in at " + welcomeDragon.getLocation().toString());
+        Float yaw = location.getPitch();
+        Float pitch = location.getPitch();
+        welcomeDragon.setRotation(yaw, pitch);
+        welcomeDragon.setPhase(EnderDragon.Phase.BREATH_ATTACK);
+
     }
 
     @EventHandler
