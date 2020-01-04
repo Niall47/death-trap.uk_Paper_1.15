@@ -2,15 +2,14 @@ package uk.deathtrap.plugins.deathtrap;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.entity.EnderDragon;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.world.ChunkPopulateEvent;
+import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.inventory.ItemStack;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -32,6 +31,22 @@ public final class MyPlayerListener implements Listener {
     }
 
     @EventHandler
+    public void onStart (WorldLoadEvent event) {
+        //never fires. probably happens before plugin loads
+        System.out.println("WORLD LOAD EVENT DETECTED!");
+        World world = event.getWorld();
+        Collection dragons = world.getEntitiesByClass(EnderDragon.class);
+        if (dragons.size() > 0){
+            //delete any existing dragons here.
+            System.out.println(dragons.toString());
+        }
+        else{
+            System.out.println("Couldn't find any dragons");
+
+        }
+        spawnGuardian(world);
+    }
+    @EventHandler
     public void onLogin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         Bukkit.getServer().getConsoleSender().sendRawMessage(player.getDisplayName() + " has joined the server!");
@@ -41,36 +56,19 @@ public final class MyPlayerListener implements Listener {
         }
     }
 
-    @EventHandler
-    public void newChunks(ChunkPopulateEvent event) {
-        HandlerList handler = event.getHandlers();
-        int X = event.getChunk().getX();
-        int Y = event.getChunk().getZ();
-        Bukkit.getServer().getConsoleSender().sendRawMessage("Creating new chunk @ " + X + " " + Y);
-    }
-
-    @EventHandler
-    public void newPlayer(PlayerSpawnLocationEvent event){
-        //this needs a (if player has played before check
-        Player player = event.getPlayer();
-        Location location = event.getSpawnLocation();
-        event.setSpawnLocation(location);
-        dragonFight(player, location);
-    }
-
-    private static void dragonFight(Player player, Location location) {
-        System.out.println(player.getName() + " is facing the dragon");
-        World world = player.getWorld();
+    private static void spawnGuardian(World world) {
+        Location zeroZero = new Location(world, 0, 265,0);
         EntityType entity = null;
-        Location dragonSpawn = new Location(world, location.getX() - 55, location.getY(), location.getZ());
-        EnderDragon welcomeDragon = (EnderDragon) world.spawnEntity(dragonSpawn, entity.ENDER_DRAGON);
-        world.strikeLightningEffect(location);
-        welcomeDragon.setGlowing(true);
-        System.out.println("Ender dragon spawned in at " + welcomeDragon.getLocation().toString());
-        Float yaw = location.getPitch();
-        Float pitch = location.getPitch();
-        welcomeDragon.setRotation(yaw, pitch);
-        welcomeDragon.setPhase(EnderDragon.Phase.BREATH_ATTACK);
+        Mob spawnGuardian = (Mob) world.spawnEntity(zeroZero, EntityType.ENDER_DRAGON);
+        EnderDragon guardian = (EnderDragon) spawnGuardian;
+        System.out.println("Spawn Guardian created at " + spawnGuardian.getLocation().toString());
+        System.out.println("Spawn Guardian is targeting " + spawnGuardian.getTarget().toString());
+        spawnGuardian.setCustomName("Spawn Guardian");
+        spawnGuardian.setCustomNameVisible(true);
+        spawnGuardian.setAI(false);
+
+        //Keep the guardian in spawn, which stays in memory. Make the object public, and let it loose on new players
+        //guardian.setPhase(EnderDragon.Phase.CHARGE_PLAYER);
 
     }
 
@@ -87,6 +85,15 @@ public final class MyPlayerListener implements Listener {
             ItemStack item = new ItemStack(Material.WRITABLE_BOOK, 1);
             player.getInventory().setItem(slot, item);
         }
+    }
+
+    @EventHandler
+    public void newChunks(ChunkPopulateEvent event) {
+        HandlerList handler = event.getHandlers();
+        World world = event.getWorld();
+        int X = event.getChunk().getX();
+        int Y = event.getChunk().getZ();
+        Bukkit.getServer().getConsoleSender().sendRawMessage("Creating new chunk @ " + X + " " + Y);
     }
 
     @EventHandler

@@ -13,7 +13,6 @@ public final class DeathTrap extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        //Bukkit.getServer().getConsoleSender().sendRawMessage("I AM A PLUGIN AND I AM ALIVE");
         MyPlayerListener listener = new MyPlayerListener(this);
         Bukkit.getServer().getPluginManager().registerEvents(listener, this);
     }
