@@ -36,7 +36,6 @@ public class SpawnGuardian {
 
         Location location = this.spawnGuardian.getLocation();
         List<Entity> nearby = this.spawnGuardian.getNearbyEntities(location.getX(), location.getY(), location.getZ());
-        System.out.println(nearby);
         return nearby;
 
         }

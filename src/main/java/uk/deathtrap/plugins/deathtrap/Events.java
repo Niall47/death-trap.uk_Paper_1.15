@@ -49,10 +49,13 @@ public class Events implements Listener {
         }
         else {
 
+            player.sendMessage(ChatColor.GOLD + "You have been selected to meet the dragon");
             spawnGuardian.scanForPlayers();
             spawnGuardian.move(player.getLocation());
             spawnGuardian.land();
             spawnGuardian.setPhase(EnderDragon.Phase.CHARGE_PLAYER);
+
+
         }
 
     }

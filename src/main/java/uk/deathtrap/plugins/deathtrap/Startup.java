@@ -24,7 +24,7 @@ public class Startup {
         World world = worlds.get(0);
         world.setKeepSpawnInMemory(true);
 
-        zeroZero = new Location(world, 0, 70, 0);
+        zeroZero = new Location(world, 0, 255, 0);
 
         //dragons are stupid so we kill and replace them
         removeDragons(world);
