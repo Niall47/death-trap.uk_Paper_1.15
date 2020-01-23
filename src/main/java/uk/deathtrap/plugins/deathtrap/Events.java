@@ -2,115 +2,74 @@ package uk.deathtrap.plugins.deathtrap;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.entity.*;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.player.*;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.ChunkPopulateEvent;
-import org.bukkit.event.world.WorldLoadEvent;
-import org.bukkit.inventory.ItemStack;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.spigotmc.event.player.PlayerSpawnLocationEvent;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
-public final class MyPlayerListener implements Listener {
+import static uk.deathtrap.plugins.deathtrap.DeathTrap.spawnGuardian;
 
-    public MyPlayerListener(DeathTrap plugin) {
-        Bukkit.getServer().getConsoleSender().sendRawMessage("Death-Trap.uk starting up");
+public class Events implements Listener {
+
+    public Events(DeathTrap deathTrap){
+
+        Startup startup = new Startup();
+
     }
 
     @EventHandler
-    public void onStart (WorldLoadEvent event) {
-        //never fires. probably happens before plugin loads
-        System.out.println("WORLD LOAD EVENT DETECTED!");
-        World world = event.getWorld();
-        Collection dragons = world.getEntitiesByClass(EnderDragon.class);
-        if (dragons.size() > 0){
-            //delete any existing dragons here.
-            System.out.println(dragons.toString());
-        }
-        else{
-            System.out.println("Couldn't find any dragons");
+    public void bullyNewPlayers(PlayerJoinEvent event){
 
-        }
-        spawnGuardian(world);
-    }
-    @EventHandler
-    public void onLogin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         Bukkit.getServer().getConsoleSender().sendRawMessage(player.getDisplayName() + " has joined the server!");
+
+        //for testing this bullies returning players
         if (!player.hasPlayedBefore()) {
             player.sendMessage(ChatColor.GOLD + "Welcome to Death-Trap.uk");
             player.sendMessage(ChatColor.GOLD + "Visit Death-Trap.uk for voting rewards and updates");
         }
-    }
+        else {
 
-    private static void spawnGuardian(World world) {
-        Location zeroZero = new Location(world, 0, 265,0);
-        EntityType entity = null;
-        Mob spawnGuardian = (Mob) world.spawnEntity(zeroZero, EntityType.ENDER_DRAGON);
-        EnderDragon guardian = (EnderDragon) spawnGuardian;
-        System.out.println("Spawn Guardian created at " + spawnGuardian.getLocation().toString());
-        System.out.println("Spawn Guardian is targeting " + spawnGuardian.getTarget().toString());
-        spawnGuardian.setCustomName("Spawn Guardian");
-        spawnGuardian.setCustomNameVisible(true);
-        spawnGuardian.setAI(false);
+            spawnGuardian.scanForPlayers();
 
-        //Keep the guardian in spawn, which stays in memory. Make the object public, and let it loose on new players
-        //guardian.setPhase(EnderDragon.Phase.CHARGE_PLAYER);
-
-    }
-
-    @EventHandler
-    public void antiBookBan(PlayerEditBookEvent event){
-        Player player = event.getPlayer();
-        int pages = event.getNewBookMeta().getPageCount();
-
-        if (pages > 10) {
-            int slot = event.getSlot();
-            ItemStack book = player.getInventory().getItem(slot);
-            book.setAmount(0);
-            player.sendMessage(ChatColor.GOLD + "Nobody wants to read your " + pages + " page novel " + player.getName());
-            ItemStack item = new ItemStack(Material.WRITABLE_BOOK, 1);
-            player.getInventory().setItem(slot, item);
         }
+
     }
 
     @EventHandler
     public void newChunks(ChunkPopulateEvent event) {
+
         HandlerList handler = event.getHandlers();
         World world = event.getWorld();
         int X = event.getChunk().getX();
         int Y = event.getChunk().getZ();
         Bukkit.getServer().getConsoleSender().sendRawMessage("Creating new chunk @ " + X + " " + Y);
-    }
 
-    @EventHandler
-    public void goToBed(PlayerBedEnterEvent event) {
-        Player player = event.getPlayer();
-        int numberOfPlayers = Bukkit.getOnlinePlayers().size();
-        String name = event.getPlayer().getDisplayName();
-        long time = player.getLocation().getWorld().getTime();
-
-        if (numberOfPlayers > 1 && ((time < 12300) || (time > 23850))) {
-            Bukkit.getConsoleSender().sendMessage(name + " is trying to sleep");
-            Bukkit.broadcastMessage("Other players are trying to sleep, be polite and sleep or disconnect");
-        }
     }
 
     @EventHandler
     public void getLastCoords(PlayerQuitEvent event) {
+
         Player player = event.getPlayer();
         String name = player.getDisplayName();
         UUID uuid = player.getUniqueId();
@@ -120,8 +79,9 @@ public final class MyPlayerListener implements Listener {
         Date today = new Date();
         JSONObject playerEntry = new JSONObject();
         JSONObject entry = new JSONObject();
-        entry.put(lastLog,today.toString());
+        entry.put(lastLog, today.toString());
         saveToJson("lastLog.json", uuid, entry);
+
     }
 
     @EventHandler
@@ -140,21 +100,23 @@ public final class MyPlayerListener implements Listener {
                 UUID uuid = event.getPlayer().getUniqueId();
                 Date today = new Date();
                 String locationString = location.getWorld().toString() + " " + location.getX() + " " + location.getY() + " " + location.getZ();
-                entry.put(material.toString() + " @ " + locationString,today.toString());
+                entry.put(material.toString() + " @ " + locationString, today.toString());
 
                 saveToJson("illegalItems.json", uuid, entry);
                 break;
+
         }
     }
 
-    private void saveToJson (String filename, UUID uuid, JSONObject entry) {
+    private void saveToJson(String filename, UUID uuid, JSONObject entry) {
 
+        //I feel like this should be a class
         try {
-            if(!Files.exists(Paths.get(filename))){
+            if (!Files.exists(Paths.get(filename))) {
                 String data = "{}";
                 Files.write(Paths.get(filename), data.getBytes());
             }
-        } catch(IOException e) {
+        } catch (IOException e) {
             System.out.println("Failed to access or create " + filename);
         }
 
@@ -169,7 +131,7 @@ public final class MyPlayerListener implements Listener {
         }
 
         try {
-            if(jsonFile.containsKey(uuid.toString())){
+            if (jsonFile.containsKey(uuid.toString())) {
                 JSONArray userHistory = (JSONArray) jsonFile.get(uuid.toString());
                 userHistory.add(entry);
                 jsonFile.put(uuid.toString(), userHistory);
@@ -180,7 +142,7 @@ public final class MyPlayerListener implements Listener {
                 jsonFile.put(uuid.toString(), userHistory);
             }
 
-        } catch(Exception e){
+        } catch (Exception e) {
             System.out.println("Error locating user in " + filename);
         }
 
@@ -190,5 +152,4 @@ public final class MyPlayerListener implements Listener {
             System.out.println("Crashed trying to write to " + filename);
         }
     }
-    }
-
+}
