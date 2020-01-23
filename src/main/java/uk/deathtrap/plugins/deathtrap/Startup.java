@@ -29,7 +29,6 @@ public class Startup {
         //dragons are stupid so we kill and replace them
         removeDragons(world);
         spawnDragon(world);
-        List <Entity> nearby = spawnGuardian.scanArea();
 
     }
 
@@ -48,5 +47,6 @@ public class Startup {
         spawnGuardian = SpawnGuardian.spawnGuardian(zeroZero);
 
     }
+
 }
 

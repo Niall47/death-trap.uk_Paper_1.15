@@ -5,6 +5,8 @@ import org.bukkit.craftbukkit.v1_15_R1.entity.CraftEnderDragon;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +46,6 @@ public class SpawnGuardian {
         List<Entity> nearbyEntities = scanForEntities();
         ArrayList<Entity> nearbyHumans = null;
 
-        //We grab a list of nearby players
         if (nearbyEntities.size() > 0) {
             for (Entity nearbyEntity : nearbyEntities) {
                 if (nearbyEntity.getClass().isInstance(HumanEntity.class)) {
@@ -56,13 +57,25 @@ public class SpawnGuardian {
 
     }
 
-    public void kill(){
+    public void move(Location location){
 
-//        this.spawnGuardian.setMomentum();
-//        this.spawnGuardian.setRotation();
-//        this.spawnGuardian.setAI();
-//        this.spawnGuardian.setAI();
+        this.spawnGuardian.teleport(location, PlayerTeleportEvent.TeleportCause.PLUGIN);
+
     }
+
+    public void land(){
+
+        this.spawnGuardian.setRemainingAir(1);
+
+    }
+
+    public void setPhase(EnderDragon.Phase phase){
+
+        spawnGuardian.setPhase(phase);
+
+    }
+
+
 
 
 }

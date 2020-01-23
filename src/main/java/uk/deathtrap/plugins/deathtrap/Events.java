@@ -2,13 +2,13 @@ package uk.deathtrap.plugins.deathtrap;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.ChunkPopulateEvent;
@@ -16,15 +16,14 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import uk.deathtrap.plugins.deathtrap.Entities.SpawnGuardian;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 import static uk.deathtrap.plugins.deathtrap.DeathTrap.spawnGuardian;
@@ -51,9 +50,20 @@ public class Events implements Listener {
         else {
 
             spawnGuardian.scanForPlayers();
-
+            spawnGuardian.move(player.getLocation());
+            spawnGuardian.land();
+            spawnGuardian.setPhase(EnderDragon.Phase.CHARGE_PLAYER);
         }
 
+    }
+
+    @EventHandler
+    public void spawnGuardianTargeting(EntityTargetLivingEntityEvent event){
+
+        if (event.getEntity().getClass().isInstance(SpawnGuardian.class)) {
+            //spawnGuardian just targeted someone.
+
+        }
     }
 
     @EventHandler
@@ -93,6 +103,8 @@ public class Events implements Listener {
         switch (material) {
             case BEDROCK:
             case END_PORTAL_FRAME:
+            case SPAWNER:
+            case DRAGON_EGG:
                 Location location = block.getLocation();
                 JSONObject playerEntry = new JSONObject();
                 JSONObject entry = new JSONObject();
