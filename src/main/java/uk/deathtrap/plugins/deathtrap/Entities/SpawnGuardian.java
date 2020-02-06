@@ -1,17 +1,14 @@
 package uk.deathtrap.plugins.deathtrap.Entities;
 
+import net.minecraft.server.v1_15_R1.EntityEnderDragon;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_15_R1.entity.CraftEnderDragon;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
-import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import static uk.deathtrap.plugins.deathtrap.DeathTrap.spawnGuardian;
 
 public class SpawnGuardian {
 
@@ -52,6 +49,7 @@ public class SpawnGuardian {
                 }
             }
         }
+
         return nearbyHumans;
 
     }
@@ -74,7 +72,9 @@ public class SpawnGuardian {
 
     }
 
+    public void setAI(Boolean ai){
 
+        this.spawnGuardian.setAI(ai);
 
-
+    }
 }

@@ -32,7 +32,7 @@ public class Events implements Listener {
 
     public Events(DeathTrap deathTrap){
 
-        Startup startup = new Startup();
+        new Startup();
 
     }
 
@@ -49,12 +49,13 @@ public class Events implements Listener {
         }
         else {
 
+            System.out.println("Attacking player " + player.getName());
             player.sendMessage(ChatColor.GOLD + "You have been selected to meet the dragon");
             spawnGuardian.scanForPlayers();
+            spawnGuardian.setAI(false);
             spawnGuardian.move(player.getLocation());
             spawnGuardian.land();
-            spawnGuardian.setPhase(EnderDragon.Phase.CHARGE_PLAYER);
-
+            spawnGuardian.setPhase(EnderDragon.Phase.CIRCLING);
 
         }
 
